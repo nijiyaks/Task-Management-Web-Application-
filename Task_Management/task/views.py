@@ -10,7 +10,13 @@ from django.contrib.auth import login
 class TaskAPIView(APIView):
 
     def get(self, request):
-        tasks = task.objects.all()
+        status_filter = request.query_params.get('status', None)  # Get 'status' query parameter
+
+        if status_filter:
+            tasks = task.objects.filter(status=status_filter)  # Filter tasks by status
+        else:
+            tasks = task.objects.all()  # Get all tasks if no filter is provided
+        
         serializer = TaskSerializer(tasks, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 

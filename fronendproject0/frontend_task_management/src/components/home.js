@@ -6,14 +6,19 @@ import axios from "axios";
 function Listtasks() {
     const [posts, setPosts] = useState([]);
     const [taskToDelete, setTaskToDelete] = useState(null);
+    const [statusFilter, setStatusFilter] = useState(""); // To store the selected status filter
 
     useEffect(() => {
         fetchPosts();
-    }, []);
+    }, [statusFilter]);  // Re-fetch tasks when the status filter changes
 
-    // Fetch the list of tasks from the API
+    // Fetch the list of tasks from the API with the selected status filter
     function fetchPosts() {
-        axios.get('http://localhost:8000/tasks/')
+        const url = statusFilter
+            ? `http://localhost:8000/tasks/?status=${statusFilter}`  // Filter by status
+            : `http://localhost:8000/tasks/`;  // Get all tasks if no filter
+
+        axios.get(url)
             .then(response => {
                 setPosts(response.data);
             })
@@ -25,7 +30,6 @@ function Listtasks() {
     // Handle task deletion
     const handleDelete = () => {
         if (taskToDelete) {
-            // Send DELETE request to API
             axios.delete(`http://localhost:8000/tasks/${taskToDelete}/`)
                 .then(response => {
                     alert("Task deleted successfully");
@@ -51,21 +55,35 @@ function Listtasks() {
             <Navbar />
             <div className="container">
                 <h1 className="my-4 text-center" style={{ color: " rgba(37, 99, 130, 0.9)" }}>Tasks</h1>
+                
+                {/* Filter dropdown for task status */}
+                <div className="mb-3">
+                    <select 
+                        className="form-select"
+                        value={statusFilter} 
+                        onChange={(e) => setStatusFilter(e.target.value)} 
+                    >
+                        <option value="">All Statuses</option>
+                        <option value="Pending">Pending</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Completed">Completed</option>
+                    </select>
+                </div>
+
                 <div className="row justify-content-center">
                     {posts.map((post) => (
                         <div className="col-md-4" key={post.id}>
                             <div className="card mb-5 h-100 shadow-sm">
                                 <div className="card-body d-flex flex-column">
                                     <h5 className="card-title text-center">{post.title}</h5>
-                                    <p className="card-text  text-justify text-center">{post.description}</p>
+                                    <p className="card-text text-justify text-center">{post.description}</p>
                                     <p className="card-text text-center"><strong>{post.due_date}</strong></p>
                                     <p className="card-text text-center"><strong>Status:</strong> {post.status}</p>
-                                    <div className=" text-center justify-content-center mt-4">
-                                    <Link to={`/update/${post.id}`} className="btn btn-success mx-2">Update</Link>
-                                    <button onClick={() => openDeleteModal(post.id)} className="btn btn-danger">Delete</button>
-                                </div>   
+                                    <div className="text-center justify-content-center mt-4">
+                                        <Link to={`/update/${post.id}`} className="btn btn-success mx-2">Update</Link>
+                                        <button onClick={() => openDeleteModal(post.id)} className="btn btn-danger">Delete</button>
+                                    </div>
                                 </div>
-                                         
                             </div>
                         </div>
                     ))}
@@ -73,7 +91,7 @@ function Listtasks() {
             </div>
 
             {/* Bootstrap Modal for Confirmation */}
-            <div className="modal fade" id="deleteModal"  aria-labelledby="deleteModalLabel" aria-hidden="true">
+            <div className="modal fade" id="deleteModal" aria-labelledby="deleteModalLabel" aria-hidden="true">
                 <div className="modal-dialog">
                     <div className="modal-content">
                         <div className="modal-header">
